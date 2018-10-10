@@ -1,0 +1,16 @@
+{
+  "name": "lnd_interface",
+  "version": "0.0.2",
+  "description": "secure server LND interface",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AllanLindJensen/DanishLightning"
+  },
+  "author": "Allan Lind Jensen",
+  "email": "allanl.jensen@gmail.com
+  "license": "MIT",
+  "dependencies": {
+    "grpc": ">=1.15.1"
+    "@grpc/proto-loader": ">=0.3.0",
+  }
+}

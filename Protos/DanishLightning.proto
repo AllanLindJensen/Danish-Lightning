@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package dl_server;
+
+// Protocol for service "Danish Lightning Interface"
+// at DanishLightning.dk
+// placed on 176.21.113.33:14203
+
+service HandleBill {
+
+	// When data has been entered and the button
+	// "BUY" has been pressed
+	// see example: send_order.js
+
+	rpc GetBill(Order) returns (Bill) {}
+
+	// When the bill has been received,
+	// the javaxcript checks every second
+	// whether the bill has been paid
+	// see example: check_order.js
+
+	// first no checking of paid bill is executed
+	// The bill is considered paid, iff number of successes
+	// differs from zero.
+
+	rpc CheckPayment(RHASH) returns (CheckPaymentResult) {}
+
+	// an infinite stream with the Gittins indices of the paid bills
+	// pass to the customer (remove from list of open connections) and
+	// close connection to customer
+
+	rpc AwaitPayment(OrderData) returns (BillPaid) {}
+}
+
+message Order {
+  int32 customer = 1;
+  string memo = 2; // text on the bill
+  int32 amount = 3; // measured in satoshis.
+}
+
+message Bill {
+  string billText = 1;
+  string r_hash = 2;
+}
+
+message RHASH {
+  string r_hash = 1;
+}
+
+message CheckPaymentResult {
+  bool paid = 1;
+  bool ID_known = 2;
+  int32 orderID = 3;
+  string memo = 4;
+  string amount = 5;
+}
+
+message OrderData {
+  string r_hash = 1;
+  int32 orderID = 2;
+}
+
+message BillPaid {
+  int32 orderID = 1;
+  string r_hash = 2;
+  int32 amount = 3; // measured in satoshis, for control
+}
