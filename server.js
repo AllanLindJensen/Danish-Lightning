@@ -5,7 +5,7 @@ var grpc = require('grpc');
 var life_span = 3600; // bills expire in 1 hour
 var waitingList = []; // list of bills awating payment
 
-process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH+ECDSA'
+// process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH+ECDSA'
 
 var m = fs.readFileSync('/home/allan/.lnd/data/chain/bitcoin/mainnet/admin.macaroon');
 var macaroon = m.toString('hex');
@@ -40,7 +40,6 @@ var gi_proto = grpc.loadPackageDefinition(packageDefinition).lnrpc;
 // Pass the crendentials when creating the client
 var client = new gi_proto.Lightning('localhost:10009', credentials);
 
-//Danish Lightning rpc server
 var awaitList = []; // list of processes awaiting confirmation of payment
   // Added by call to awaitPayment
   // Deleted by a) payment, b) checkPayment c) every day old ones
@@ -170,13 +169,14 @@ function searchHashInWaitingList(RHash) {
   //TODO
 function sanatizeWaitingList() {
 // this procedure has poor logic.
-  console.log("sanatizing the waitingList");
+  console.log(new Date().toUTCString() + " sanatizing the waitingList");
   var limit = new Date() - life_span;
   var index = 0;
   while (index > -1) {
     index = waitingList.findIndex(el => {
     return el.time < limit;
     });
+    console.log("index is "+index);
     if (index > -1) {
       console.log("expired " + waitingList[index].RHASH);
       waitingList.splice(index,1);
@@ -223,7 +223,15 @@ function main() {
   var DL_proto = grpc.loadPackageDefinition(packageDefinition).dl_server;
   var server = new grpc.Server();
   server.addService(DL_proto.HandleBill.service, {getBill: getBill, awaitPayment: awaitPayment, checkPayment: checkPayment});
-  server.bind('0.0.0.0:14204', grpc.ServerCredentials.createInsecure());
+   
+  // read certificate and key, combine, open TLS server DanishLightning on port 14204
+  server.bind('0.0.0.0:14204', grpc.ServerCredentials.createSsl(
+    fs.readFileSync('certificates/CA.pem'),
+    [{
+        private_key: fs.readFileSync('certificates/LittleShop.key'),
+        cert_chain: fs.readFileSync('certificates/LittleShop.crt')
+    }],
+    false));  // no authentication of calling buzniz
   server.start();
 
   // subscribe to paid invoices
